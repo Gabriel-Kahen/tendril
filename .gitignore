@@ -1,0 +1,33 @@
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Python / tooling
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Build products and dependencies
+node_modules/
+build/
+dist/
+*.egg-info/
+
+# Local experiment data and scratch space
+work/
+runs/
+checkpoints/
+artifacts/
+.cache/
+
+# Editors / OS
+.DS_Store
+Thumbs.db
+*.swp
