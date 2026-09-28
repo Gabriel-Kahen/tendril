@@ -31,3 +31,8 @@ artifacts/
 .DS_Store
 Thumbs.db
 *.swp
+
+# Native simulation diagnostics
+MUJOCO_LOG.TXT
+core
+core.*

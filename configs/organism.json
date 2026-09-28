@@ -1,0 +1,10 @@
+{
+  "timestep": 0.0005,
+  "juvenile_seconds": 3.0,
+  "assay_seconds": 2.0,
+  "max_segments": 32,
+  "max_tissues": 4,
+  "tissue_young": 50000.0,
+  "max_mass": 2.0,
+  "energy_budget": 20.0
+}

@@ -1,6 +1,6 @@
 # Design
 
-This is a research design, not an implemented specification. **Commitments** describe the accepted direction. **Proposals** are starting hypotheses to test. Specific mechanics, representations, numerical limits, and selection algorithms remain open.
+This is the research design. **Commitments** describe the accepted direction; **proposals** remain hypotheses to test. A runnable implementation now exists: see [IMPLEMENTATION.md](IMPLEMENTATION.md) for the selected representations, current algorithms, measured scope, and open limits. Implementation choices do not turn research hypotheses into established results.
 
 ## Purpose and boundaries
 
@@ -58,7 +58,7 @@ The proposed genotype is an interpretable graph or collection of developmental m
 
 Variation should include numerical edits to thresholds, timing, growth angles, stiffness, and activation; structural edits such as duplication, deletion, and rewiring; and compatible module recombination. Duplicating a branch-producing module together with its actuation logic, then changing its phase, is a useful example of a mutation with a meaningful developmental effect.
 
-Ordinary random mutations remain essential. A lineage must be able to pass through neutral changes and passive or immobile precursors. A possible design is to retain a developmental archive alongside a behavior archive so that useful structural stepping stones are not discarded for lacking immediate motion.
+Candidate generation retains stochastic variation, but every evolutionary selection goes through Jev. There is no unguided search mode or fallback. A lineage must still be able to pass through neutral changes and passive or immobile precursors. A possible design is to retain a developmental archive alongside a behavior archive so that useful structural stepping stones are not discarded for lacking immediate motion.
 
 An expensive generative model might occasionally invent a new module template. That template would need validation before entering the mutation library. This is optional and distinct from ordinary offspring production.
 
@@ -85,24 +85,24 @@ Repeatability does not require perfectly periodic or identical motion. Multistab
 
 An inspectable specimen gallery, developmental playback, behavior clips, and lineage history are intended research outputs. They should make discovery visible, not merely produce aggregate scores.
 
-## Jev's exact proposed role
+## Jev's required role
 
 Jev is a cheap typed-decision model. It returns constrained choices or other typed outputs; it is not the free-form code generator for this design. Its low cost motivates testing more frequent guidance, but does not establish that the guidance will improve evolution.
 
-For a subset of offspring:
+For every evaluated evolutionary candidate, including initialization:
 
 1. Code constructs a pool of legal, concrete edits for a selected parent.
 2. Jev receives the relevant parent module, computed behavioral summaries, available edit identifiers, and limited lineage or mutation history.
 3. Jev selects or shortlists edit identifiers, or possibly a compatible donor module.
 4. Code applies and validates the edit; physics evaluates the offspring.
 
-A pool of 32 edits and an initial unguided share of at least half are illustrative starting proposals, not settled hyperparameters. Useful choices might include delayed activation in a duplicated branch, greater compliance at a strained junction, or strain feedback into a growth rule.
+A pool of 32 edits is the initial configurable setting. The earlier proposal to evaluate unguided offspring is superseded by the decision to require Jev for every selection. Useful choices might include delayed activation in a duplicated branch, greater compliance at a strained junction, or strain feedback into a growth rule.
 
-Jev should not be the per-frame muscle controller, the novelty or survival judge, a physical oracle, an image critic, or the sole gate through which mutations pass. The candidate generator defines which edits are legal; simulation provides evidence about effects. Limited numerical precision and multi-step reasoning are reasons to keep its decisions narrow and summaries explicit.
+Jev is the required candidate-selection gate. It is not the per-frame muscle controller, the novelty or survival judge, a physical oracle, or an image critic. The candidate generator defines which edits are legal; simulation provides evidence about effects. Limited numerical precision and multi-step reasoning are reasons to keep its decisions narrow and summaries explicit.
 
 Log prompts, typed responses, model versions, costs, and resulting edits. Cache suitable requests and support replay. A low API price may permit many calls, but physics may dominate total cost.
 
-The research comparison is Jev-guided variation against random and simple adaptive selection from matched candidate pools. Compare valid novelty archive expansion, diversity, robustness, and useful capabilities under total cost and time budgets. There is no demonstrated Jev advantage yet.
+The supported research path is replicated Jev-guided evolution. Track valid archive expansion, diversity, robustness and useful capabilities under recorded costs and eventual enforced budgets. Removing unguided comparison modes means these runs cannot establish a causal advantage over unguided search. If credentials are missing or guidance fails, stop and preserve resumable state; never substitute a randomly selected candidate.
 
 ## EvoForest adaptation
 

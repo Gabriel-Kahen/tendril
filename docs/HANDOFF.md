@@ -1,68 +1,72 @@
 # Project handoff
 
-Recorded September 23, 2026. This document is the starting context for continuing Tendril in its own project.
+Updated September 27, 2026. Read README.md, IMPLEMENTATION.md and relevant findings before changes.
 
 ## Current state
 
-Tendril is at the design stage. These documents are the initial artifact. There is no simulator, engine selection, benchmark result, or evidence that Jev improves this search problem.
+Tendril is runnable research software using Python 3.12 and MuJoCo 3.14.0. SOFA was investigated first; the tested Python bindings lacked the needed topology insertion calls. MuJoCo passed explicit compilation/state-transfer tests and combined growing-body fixtures. Newton was not benchmarked.
 
-The project explores growing, muscle-like 3D structures inspired by biological development and evolution. The desired outcome is a diverse collection of coherent and surprising physical organisms, with understandable developmental histories and mechanical behaviors.
+The system implements genuinely 3D local development during contraction, elastic articulated branches, collidable loop connections, volumetric tetrahedral tissue, local feedback/signaling, material and energy budgets, independent adult assays, diversity archives, legal mutation/recombination, required Jev selection, parallel CPU evaluation, replay records and a 3D playback gallery. There is no global scalar fitness champion.
 
-## Decisions already made
+This does not establish open-ended evolution, sophisticated behavior, calibrated biological tissue, or a Jev advantage. See VALIDATION.md for measured evidence and IMPLEMENTATION.md for conventions and limitations.
 
-- **The entire experiment is 3D from the beginning.** Do not substitute a 2D prototype with a promise to migrate later.
-- Evolve interesting physical things rather than optimize a single conventional task.
-- Preserve both novelty and functional pressure. Physical constraints and local capability should prevent arbitrary nonsense without erasing unusual forms.
-- Development and contraction should interact. The genotype should describe a process that grows an organism, not only the coordinates of a finished body.
-- Reuse an existing physics engine and build the evolutionary and developmental layers around it.
-- Investigate Jev as inexpensive guidance for variation. Its low cost allows more calls than a larger generative model, but its benefit must be measured.
-- Use **Tendril** as the project name.
+## Run and continue
 
-## How the direction developed
+```sh
+uv sync --python 3.12 --extra test
+uv run pytest -q
+uv run tendril run --genome configs/mixed-genome.json --config configs/mixed-organism.json --seed 1 --out runs/mixed-example
+uv run tendril evolve --config configs/evolution.json --out runs/evolution
+uv run tendril gallery runs
+```
 
-The starting question was whether TypeSafe's Jev could work with the owner's EvoForest reimplementation. The direction moved away from ordinary predictor or algorithm search and generic digital ecology toward developmental physical organisms. Novelty matters because discovering different forms and behaviors is itself an objective; physical competence supplies grounded constraints and meaningful tradeoffs.
+The default experiment uses four CPU workers, 64 evaluations, three seconds of development and four independent two-second adult assays per valid body. Integration steps are 0.5 ms. Tissue makes rollouts appreciably more expensive. No NVIDIA hardware or GPU simulation is required.
 
-Earlier suggestions of a 2D starting point were explicitly rejected. An existing engine is preferred, but none has been chosen. SOFA, MuJoCo, and Newton are candidates to investigate, not interchangeable confirmed solutions.
+The historical unguided validation search (from before the Jev-only decision) is saved locally in `runs/release/evolution`: 24 evaluations, 20 valid, eight structural niches and two behavioral niches. It includes valid evolved tissue-bearing bodies. Generated runs are ignored by git. The curated mixed-body genome/configuration are checked in as reproducible inputs.
 
-## Working proposals
+Resume accepts a larger evaluation limit but refuses changed source fingerprints, runtime versions or experiment settings before modifying a checkpoint:
 
-Read [DESIGN.md](DESIGN.md) for the full working model. The main proposals are:
+```sh
+uv run tendril evolve --config configs/evolution.json --out runs/evolution --resume --evaluations 256
+```
 
-- A finite-thickness network of oriented structural elements, passive elastic connections, and bounded contractile fibers.
-- Local developmental rules for extension, branching, attachment, differentiation, signaling, and stopping.
-- Faster physical integration, slower control, and still slower growth; strain and contact can influence development.
-- Juvenile concurrent growth and motion, followed by mature assays with growth paused.
-- Material and energy budgets that include topology and material-property edits.
-- Diversity archives covering structure, motion, and response to perturbation; local competition within relevant niches; preservation of passive precursors.
-- Module duplication, numerical edits, compatible recombination, and unguided mutation alongside Jev-selected edits.
-- Jev chooses among legal mutations generated by code using actual simulation summaries. It does not judge survival or invent physics.
-- A gallery of specimens, developmental playback, and lineage history.
+After changing simulation/search source, start a new experiment. Do not bypass the fingerprint check to blend different physical evaluators. The invocation wall-time field in summary.json describes the most recent invocation, including a no-op resume.
 
-These are hypotheses, not commitments to a specific solver, element representation, archive algorithm, or data schema.
+## Decisions to preserve
 
-## Next concrete milestone
+- Keep growth, mechanics, collisions, descriptors and playback genuinely 3D.
+- Discover diverse coherent organisms rather than silently replacing the experiment with a single-task optimizer.
+- Preserve developmental stepping stones and passive precursors alongside local capability competition.
+- Jev's selection prompt prioritizes novelty over immediate performance or usefulness, with explicit value for simple, passive and unfinished stepping stones. See JEV_ARCHITECTURE.md for the exact instruction; archive rules remain as documented.
+- Simulation supplies physical evidence. Jev selects every evolutionary candidate but never judges survival. No unguided/adaptive mode or random fallback is supported.
+- New material enters from an explicit comoving external reservoir. Log supplied mass, momentum, signed mechanical-energy changes and charged fabrication/work.
+- Reject transient tissue strain/inversion failures by checking every physical step, not only saved frames.
+- Keep code inspectable and save seeds, versions, candidate pools, edits, physical accounting, configurations and lineage.
+- Never commit credentials, conversation dumps or generated bulk data.
 
-Run the [engine feasibility test](ENGINE_EVALUATION.md) before building a large evolutionary system. The central question is whether a growing 3D structure can change topology while contracting and maintaining valid physical state, collision behavior, and energy accounting.
+## Important implementation details
 
-Investigate SOFA first for its dynamic-topology facilities, with MuJoCo as a comparator and Newton as another candidate if it can support the required edits. Modern MuJoCo model editing and recompilation must be assessed on their actual capabilities; do not dismiss it by assuming topology changes are impossible. Likewise, do not assume SOFA's general topology support means every desired component works together, or that Newton's GPU support solves dynamic growth.
+Fresh engine models transfer named state explicitly. Generated tissue joints receive stable names. New connections use live geometry as their rest length, and existing connections keep their original rest lengths. Adult binary models preserve runtime rest overrides that exported XML alone does not.
 
-Start with a tiny branch that grows while actively contracting, touches itself and the floor, forms a connection to another branch, and pauses growth for an adult test. Measure continuity, contact validity, energy, timestep sensitivity, edit cost, and throughput. A polished static robot demo would not answer the central question.
+MuJoCo's reported potential energy omits the tested volumetric flex elastic term. The implementation adds its engine-consistent energy and tests its gradient against engine forces; it does not double-count 1D flex energy. Positive muscle work is charged separately per actuator from actual timestep displacement, with bounded-force retries for power/energy limits.
 
-Do not choose an engine simply because it is familiar or has attractive rendering. Prefer its built-in viewer initially, with headless simulation independent of presentation.
+Regulatory state advances at every physical step, including adulthood, through tree and loop connections. Tissue contacts report to their supporting site; flexible-link contacts report to both ends. Only solver-active contacts enter this boolean feedback. See FEEDBACK_MODEL.md for model equations and limits.
 
-## Open questions
+Each adult assay starts from the same saved adult state, including its independently copied regulatory signals. Saved playback phases have independent time origins. Archive admission uses the primary evaluation; use `tendril verify` for replay, half-timestep and changed-perturbation evidence.
 
-- Which element representation and engine support safe, affordable developmental edits?
-- What are the smallest inherited module language and local state needed for rich development?
-- How are new mass, strain, momentum, and actuation energy initialized and charged?
-- Which descriptors preserve interesting alternatives without making noise look novel?
-- How should developmental stepping stones and mature behaviors share search budget?
-- When does Jev guidance beat random or simple adaptive mutation selection after accounting for physics cost?
-- Which EvoForest components are actually worth reusing once interfaces are concrete?
-- What material limits, rollout lengths, timescales, population sizes, and perturbations fit the available compute?
+The efficiency pass removes redundant warning-view iteration, endpoint computation, signal-edge sorting, unchanged-frame DOM updates and tissue mesh allocation. Seven paired fixture runs have exactly equal saved trajectories and physical results; the full mixed-body pair uses 12.5% less wall time. Physics settings and checks are unchanged. See EFFICIENCY.md for scope, measurements and rejected memory/latency tradeoffs.
 
-## Continuing work
+A second pass removes redundant position-array copies/reads and generic signal-clipping dispatch. It adds no persistent cache or changed numerical operation. JEV_ARCHITECTURE.md sketches the actual choice → simulation → archive loop, including API boundaries and remaining live-validation work.
 
-The next project task should read these documents and briefly restate the next milestone before substantial implementation. Keep discussion concise unless deeper technical analysis is requested. Challenge weak assumptions, distinguish evidence from proposals, and do not claim novelty or performance without comparison.
+The Jev HTTPS adapter has passed live authenticated selection with `jev-1.13.0` and usage reporting. CLI credentials come from the process environment or a private owner-only key file outside the repository. Request/dollar limits survive resume, with conservative reservations written before dispatch. The wall limit gates new requests/batches and allows in-flight work to finish. Missing/invalid guidance stops with resumable state. See LIVE_READINESS.md for current evidence. Historical unguided runs remain inspectable but cannot resume under the new policy.
 
-Future development belongs in this repository and its project. Keep public documentation focused on the research; do not copy private conversation history, credentials, or unrelated local material into the repository.
+The September 27 live integration run completed 16 Jev-selected evaluations, including archived-parent choices and checkpoint continuation; one organism passed all physical checks. Initial failures now inform mutation history and the last eight completed trial summaries supplied to Jev. Rounded probability totals are validated against their reported precision. All 140 tests pass. The low valid fraction remains a research limitation, not a reason to relax physical gates.
+
+## Next research work
+
+1. Tighten compliant contact relative to body thickness: current fixtures have approximately 5–7 mm penetration against an 8 mm gate and 12 mm capsule radius.
+2. Expand morphology/material/timestep tests and independent physical references. Current soft tissue is a small-strain elastic substrate; arbitrary remeshing and tissue fusion are not implemented.
+3. Run longer replicated searches; inspect whether descriptor niches retain meaningful diversity rather than stationary variants. Recheck promising bodies before interpreting capability.
+4. Add robust archive qualification and improve novelty context. Measure physical capability/diversity across longer guided runs without claiming a baseline advantage.
+
+Routine authorized development should proceed without repeated approval requests. Distinguish implementation, fixture evidence and scientific hypotheses.

@@ -1,6 +1,6 @@
 # Engine feasibility evaluation
 
-**Status: planned, not run. No engine is selected.**
+**Status: initial tests run; MuJoCo 3.14.0 is the implemented backend.** SOFA was investigated first. Read [SOFA findings](SOFA_INVESTIGATION.md), [combined branch/mixed-body findings](BRANCH_FINDINGS.md), and [volumetric findings](SOFT_BODY_FINDINGS.md). The requirements below remain the evaluation standard; passing the documented fixtures does not establish validity for all morphologies.
 
 Reuse a physics engine; build Tendril's developmental rules, mutation system, and archives ourselves. The first investigation should test changing topology during active mechanics, because that requirement distinguishes Tendril from ordinary fixed-body simulation.
 
@@ -48,4 +48,4 @@ Prefer the simplest engine and representation that support the developmental loo
 
 If a candidate fails, identify the obstacle: unsupported topology, incompatible collision updates, numerical behavior, excessive edit overhead, or our own implementation. Test a targeted fix or another candidate before considering a custom solver. Building a small extension to an existing engine may be enough.
 
-Only after this test should we fix the substrate, define an initial genotype, and run unguided evolution. Add Jev once a stable baseline provides meaningful choices and measurable outcomes.
+The initial feasibility tests and historical unguided validation are complete. The current project decision requires Jev for every evolutionary selection; future searches must stop on guidance failure rather than fall back to unguided evolution.

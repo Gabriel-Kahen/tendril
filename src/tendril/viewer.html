@@ -1,0 +1,677 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Tendril</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font:
+          14px ui-sans-serif,
+          system-ui,
+          sans-serif;
+        color: #dce8e3;
+        background: #111b20;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        overflow: hidden;
+      }
+      button,
+      select,
+      input {
+        font: inherit;
+      }
+      button,
+      select {
+        color: inherit;
+        background: #203137;
+        border: 1px solid #42575b;
+        border-radius: 8px;
+        padding: 9px 12px;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #2b4447;
+      }
+      button:focus-visible,
+      select:focus-visible,
+      input:focus-visible {
+        outline: 2px solid #a4dfc2;
+        outline-offset: 3px;
+      }
+      button:disabled {
+        opacity: 0.4;
+        cursor: default;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      header {
+        position: fixed;
+        z-index: 2;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 68px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        padding: 14px 24px;
+        background: linear-gradient(#101c24dc, #101c2400);
+      }
+      h1 {
+        font-size: 19px;
+        font-weight: 500;
+        letter-spacing: -0.6px;
+        margin: 0;
+        color: #b1d9c4;
+      }
+      #specimens {
+        max-width: 340px;
+        min-width: 0;
+        text-overflow: ellipsis;
+        background: #16252cbb;
+        flex: 1;
+      }
+      #details {
+        margin-left: auto;
+        background: #16252cbb;
+      }
+      main {
+        height: 100dvh;
+      }
+      canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+        touch-action: none;
+        outline: none;
+      }
+      .scene-label {
+        position: fixed;
+        top: 81px;
+        left: 25px;
+        pointer-events: none;
+        color: #a0b5b6;
+        font-size: 12px;
+      }
+      #phase {
+        text-transform: capitalize;
+      }
+      #phase:after {
+        content: " · recorded";
+        opacity: 0.6;
+      }
+      .transport {
+        position: fixed;
+        z-index: 2;
+        bottom: 28px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: min(620px, calc(100% - 40px));
+        display: flex;
+        gap: 16px;
+        align-items: center;
+        padding: 12px 16px;
+        border: 1px solid #536f6b55;
+        border-radius: 14px;
+        background: #122228e6;
+        box-shadow: 0 8px 32px #0003;
+        backdrop-filter: blur(16px);
+      }
+      #play {
+        border: 0;
+        padding: 8px 10px;
+        min-width: 65px;
+        background: #a4d6bb;
+        color: #162a23;
+        font-weight: 600;
+      }
+      #timeline {
+        min-width: 0;
+        width: 100%;
+        accent-color: #b0d7c0;
+        cursor: pointer;
+      }
+      #clock {
+        white-space: nowrap;
+        font-size: 12px;
+        font-variant-numeric: tabular-nums;
+        color: #afc1c0;
+      }
+      .hint {
+        position: fixed;
+        bottom: 7px;
+        width: 100%;
+        text-align: center;
+        color: #829b9c;
+        font-size: 10px;
+        pointer-events: none;
+      }
+      #empty {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 10px;
+        pointer-events: none;
+        color: #9eb7b6;
+      }
+      #error,
+      #renderError {
+        position: fixed;
+        top: 100px;
+        left: 24px;
+        right: 24px;
+        color: #efbc91;
+        font-size: 13px;
+        pointer-events: none;
+      }
+      dialog {
+        position: fixed;
+        inset: 76px 16px 104px auto;
+        margin: 0;
+        width: 360px;
+        max-width: calc(100% - 32px);
+        max-height: none;
+        height: calc(100dvh - 180px);
+        border: 1px solid #405853;
+        border-radius: 14px;
+        padding: 22px;
+        background: #14252bee;
+        color: #dce8e3;
+        backdrop-filter: blur(20px);
+        box-shadow: 0 16px 50px #0006;
+        overflow: auto;
+      }
+      dialog::backdrop {
+        background: #030d1330;
+      }
+      .inspector-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      h2 {
+        font-size: 17px;
+        font-weight: 500;
+        margin: 0;
+      }
+      #name {
+        overflow-wrap: anywhere;
+        color: #a7c9bb;
+        font-size: 13px;
+        margin: 18px 0 8px;
+      }
+      #close {
+        font-size: 21px;
+        border: 0;
+        background: transparent;
+        padding: 0 4px;
+      }
+      h3 {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #9eb7b6;
+        margin: 24px 0 10px;
+      }
+      dl {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 9px;
+        font-size: 12px;
+      }
+      dt {
+        color: #9bb0af;
+      }
+      dd {
+        margin: 0;
+        text-align: right;
+        max-width: 180px;
+        overflow-wrap: anywhere;
+      }
+      summary {
+        cursor: pointer;
+        color: #afc7bc;
+        padding: 12px 0;
+        font-size: 12px;
+      }
+      pre {
+        font-size: 11px;
+        line-height: 1.6;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        color: #9fb7b3;
+      }
+      .view-options {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 16px;
+      }
+      .view-options button,
+      .view-options select {
+        font-size: 12px;
+        padding: 7px 10px;
+      }
+      button[aria-pressed="true"] {
+        border-color: #a4dfc2;
+      }
+      .event {
+        display: flex;
+        gap: 12px;
+        padding: 6px 0;
+        font-size: 11px;
+        border-top: 1px solid #29413e;
+      }
+      .event small {
+        min-width: 49px;
+        color: #8ca8a4;
+      }
+      .event span {
+        overflow-wrap: anywhere;
+      }
+      #status {
+        color: #8ca8a4;
+        font-size: 11px;
+        margin-top: 22px;
+      }
+      @media (max-width: 520px) {
+        header {
+          padding: 12px;
+          gap: 10px;
+          height: 62px;
+        }
+        h1 {
+          font-size: 16px;
+        }
+        button,
+        select {
+          padding: 8px;
+          font-size: 12px;
+        }
+        #details {
+          padding: 8px;
+        }
+        .scene-label {
+          left: 14px;
+          top: 70px;
+        }
+        .transport {
+          bottom: 26px;
+          width: calc(100% - 24px);
+          gap: 8px;
+          padding: 9px;
+        }
+        #play {
+          min-width: 54px;
+        }
+        #clock {
+          font-size: 10px;
+        }
+        dialog {
+          inset: 68px 12px 96px auto;
+          max-width: calc(100% - 24px);
+          height: calc(100dvh - 164px);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Tendril</h1>
+      <select id="specimens" aria-label="Specimen" disabled>
+        <option>Loading…</option></select
+      ><button id="details" aria-haspopup="dialog">Details</button>
+    </header>
+    <main>
+      <canvas
+        id="scene"
+        role="img"
+        aria-label="Interactive three dimensional specimen replay"
+      ></canvas>
+    </main>
+    <div class="scene-label"><span id="phase" hidden></span></div>
+    <div id="empty">
+      <strong>Loading organisms</strong
+      ><span>Recorded development and behavior</span>
+    </div>
+    <div id="error" role="alert"></div>
+    <div id="renderError" role="alert"></div>
+    <div class="transport">
+      <button id="play" aria-label="Play recording" disabled>Play</button
+      ><input
+        id="timeline"
+        type="range"
+        min="0"
+        max="0"
+        value="0"
+        aria-label="Recorded frame"
+      /><span id="clock">0.00 / 0.00 s</span>
+    </div>
+    <div class="hint">Drag to orbit · Scroll to zoom · Shift-drag to pan</div>
+    <dialog id="inspector" aria-labelledby="inspectorTitle">
+      <div class="inspector-head">
+        <h2 id="inspectorTitle">Specimen details</h2>
+        <button id="close" aria-label="Close details">×</button>
+      </div>
+      <div id="name"></div>
+      <div class="view-options">
+        <button id="fit">Reset view</button
+        ><button id="wire" aria-pressed="false">Mesh</button
+        ><select id="speed" aria-label="Playback speed">
+          <option value="0.25">¼× speed</option>
+          <option value="0.5">½× speed</option>
+          <option value="1" selected>1× speed</option>
+          <option value="2">2× speed</option>
+          <option value="4">4× speed</option>
+        </select>
+      </div>
+      <h3>Physical state</h3>
+      <dl id="physical"></dl>
+      <h3>Capabilities & lineage</h3>
+      <dl id="capabilities"></dl>
+      <details>
+        <summary>Development events</summary>
+        <div id="events"></div>
+      </details>
+      <details>
+        <summary>Accounting & descriptors</summary>
+        <pre id="accounting"></pre>
+      </details>
+      <details>
+        <summary>Genome</summary>
+        <pre id="genome"></pre>
+      </details>
+      <p id="status"></p>
+    </dialog>
+    <script type="module">
+      const $ = (id) => document.getElementById(id),
+        canvas = $("scene");
+      let scene = null;
+      try {
+        const { SceneView } = await import("/scene.js");
+        scene = new SceneView(canvas);
+      } catch (error) {
+        $("renderError").textContent = "3D view unavailable: " + error.message;
+      }
+      let items = [],
+        specimen = null,
+        index = 0,
+        playing = false,
+        last = 0,
+        playTime = 0,
+        wire = false,
+        requestSerial = 0,
+        displayedFrame = null,
+        displayedSpecimen = null,
+        detailsFrame = null,
+        detailsSpecimen = null;
+      const finite = (v) => typeof v === "number" && Number.isFinite(v);
+      const number = (v) => (finite(v) ? v.toPrecision(4) : String(v ?? "—"));
+      function dl(node, pairs) {
+        node.replaceChildren();
+        for (const [key, value] of pairs) {
+          const dt = document.createElement("dt"),
+            dd = document.createElement("dd");
+          dt.textContent = key;
+          dd.textContent = number(value);
+          node.append(dt, dd);
+        }
+      }
+      function draw() {
+        if (specimen?.frames[index]) scene?.setFrame(specimen.frames[index]);
+      }
+      function fit() {
+        if (specimen?.frames.length) scene?.fit(specimen.frames);
+      }
+      $("details").onclick = () => {
+        $("inspector").showModal();
+        updateDetails();
+      };
+      $("close").onclick = () => $("inspector").close();
+      $("inspector").onclick = (event) => {
+        if (event.target === $("inspector")) {
+          const box = event.target.getBoundingClientRect();
+          if (
+            event.clientX < box.left ||
+            event.clientX > box.right ||
+            event.clientY < box.top ||
+            event.clientY > box.bottom
+          )
+            event.target.close();
+        }
+      };
+      function update() {
+        const f = specimen?.frames[index];
+        if (f === displayedFrame && specimen === displayedSpecimen) return;
+        displayedFrame = f;
+        displayedSpecimen = specimen;
+        $("timeline").value = index;
+        $("clock").textContent =
+          `${(specimen?._times[index] || 0).toFixed(2)} / ${(specimen?._times.at(-1) || 0).toFixed(2)} s`;
+        $("phase").hidden = !f;
+        $("phase").textContent = f?.phase || "recorded";
+        updateDetails();
+        draw();
+      }
+      function updateDetails() {
+        const f = specimen?.frames[index];
+        if (
+          !$("inspector").open ||
+          (f === detailsFrame && specimen === detailsSpecimen)
+        ) return;
+        detailsFrame = f;
+        detailsSpecimen = specimen;
+        if (f)
+          dl($("physical"), [
+            ["Validity", specimen.result.valid ? "valid" : "invalid"],
+            ["Time", `${number(f.time)} s`],
+            ["Segments", (f.segments || []).length],
+            ["Soft vertices", (f.flex_vertices || []).length],
+            ["Energy", f.energy],
+            [
+              "Spent",
+              typeof f.spent === "object" ? JSON.stringify(f.spent) : f.spent,
+            ],
+          ]);
+        let shown = (specimen?.events || [])
+          .filter((e) => !finite(e.time) || e.time <= (f?.time ?? Infinity))
+          .slice(-20)
+          .reverse();
+        $("events").replaceChildren();
+        for (let e of shown) {
+          let row = document.createElement("div");
+          row.className = "event";
+          let time = document.createElement("small");
+          time.textContent = finite(e.time) ? `${e.time.toFixed(3)} s` : "";
+          let label = document.createElement("span");
+          label.textContent =
+            (e.type || e.kind || e.operation || e.event || "edit") +
+            (e.accepted === false ? " · rejected" : "") +
+            (e.reason ? " · " + e.reason : "");
+          row.append(time, label);
+          row.title = JSON.stringify(e);
+          $("events").append(row);
+        }
+        if (!shown.length) $("events").textContent = "No events at this time.";
+      }
+      let listSignature = "";
+      const requestedSpecimen = new URLSearchParams(location.search).get(
+        "specimen",
+      );
+      function renderSpecimens() {
+        const signature = JSON.stringify(
+          items.map((x) => [x.id, x.result.valid]),
+        );
+        if (signature !== listSignature) {
+          listSignature = signature;
+          $("specimens").replaceChildren();
+          for (const item of items) {
+            const option = document.createElement("option");
+            option.value = item.id;
+            option.textContent =
+              item.id + (item.result.valid ? "" : " · invalid");
+            $("specimens").append(option);
+          }
+        }
+        if (specimen) $("specimens").value = specimen.id;
+        $("specimens").disabled = !items.length;
+      }
+      async function select(id) {
+        let serial = ++requestSerial;
+        try {
+          let response = await fetch(
+            "/api/specimen?id=" + encodeURIComponent(id),
+          );
+          if (!response.ok) throw Error("Could not load specimen");
+          let data = await response.json();
+          if (serial !== requestSerial) return;
+          let steps = data.frames
+              .slice(1)
+              .map((f, i) => f.time - data.frames[i].time)
+              .filter((t) => t > 0)
+              .sort((a, b) => a - b),
+            fallback = steps[Math.floor(steps.length / 2)] || 0.05;
+          data._times = [0];
+          for (let i = 1; i < data.frames.length; i++) {
+            let step = data.frames[i].time - data.frames[i - 1].time;
+            data._times.push(data._times[i - 1] + (step > 0 ? step : fallback));
+          }
+          specimen = data;
+          index = 0;
+          playing = false;
+          playTime = 0;
+          $("play").textContent = "Play";
+          $("play").setAttribute("aria-label", "Play recording");
+          $("play").disabled = !data.frames.length;
+          $("timeline").max = Math.max(0, data.frames.length - 1);
+          $("name").textContent = id;
+          $("name").title = id;
+          const url = new URL(location.href);
+          url.searchParams.set("specimen", id);
+          history.replaceState(null, "", url);
+          $("empty").hidden = !!data.frames.length;
+          if (!data.frames.length) {
+            $("empty").replaceChildren();
+            let msg = document.createElement("strong");
+            msg.textContent = "No recorded frames";
+            $("empty").append(msg);
+          }
+          let result = data.result;
+          $("accounting").textContent = JSON.stringify(
+            {
+              accounting: result.accounting,
+              descriptors: result.descriptors,
+              reasons: result.reasons,
+            },
+            null,
+            2,
+          );
+          let lineage =
+            result.lineage ||
+            data.genome.lineage ||
+            Object.fromEntries(
+              ["evaluation", "parent", "donor", "selection_view"]
+                .filter((k) => k in result)
+                .map((k) => [k, result[k]]),
+            );
+          if (result.edit)
+            lineage.Mutation = result.edit.description || result.edit.kind;
+          dl($("capabilities"), [
+            ...Object.entries(result.capabilities || {}),
+            ["Seed", result.seed],
+            ...Object.entries(lineage),
+          ]);
+          $("genome").textContent = JSON.stringify(data.genome, null, 2);
+          renderSpecimens();
+          fit();
+          update();
+        } catch (e) {
+          $("error").textContent = e.message;
+        }
+      }
+      async function refresh() {
+        try {
+          let r = await fetch("/api/specimens");
+          if (!r.ok) throw Error("Could not load gallery");
+          items = await r.json();
+          $("status").textContent =
+            `${items.length} recorded specimen${items.length === 1 ? "" : "s"} · local playback`;
+          $("error").textContent = "";
+          renderSpecimens();
+          if (!items.length && !specimen)
+            $("empty").textContent = "No recorded organisms yet.";
+          if (!specimen && items.length)
+            await select(
+              items.find((item) => item.id === requestedSpecimen)?.id ||
+                items.find((item) => item.result.valid)?.id ||
+                items[0].id,
+            );
+        } catch (e) {
+          $("error").textContent = e.message;
+          $("status").textContent = "Gallery unavailable";
+        }
+      }
+      $("specimens").onchange = () => select($("specimens").value);
+      $("fit").onclick = fit;
+      $("wire").onclick = () => {
+        wire = !wire;
+        $("wire").setAttribute("aria-pressed", wire);
+        scene?.setWireframe(wire);
+        draw();
+      };
+      $("play").onclick = () => {
+        if (!specimen?.frames.length) return;
+        if (index === specimen.frames.length - 1) {
+          index = 0;
+          playTime = 0;
+        }
+        playing = !playing;
+        $("play").textContent = playing ? "Pause" : "Play";
+        $("play").setAttribute(
+          "aria-label",
+          playing ? "Pause recording" : "Play recording",
+        );
+      };
+      $("timeline").oninput = () => {
+        index = Number($("timeline").value);
+        playTime = specimen?._times[index] || 0;
+        update();
+      };
+
+      function tick(now) {
+        let dt = last ? Math.min(0.1, (now - last) / 1000) : 0;
+        last = now;
+        if (playing && specimen?.frames.length) {
+          playTime += dt * Number($("speed").value);
+          let frames = specimen.frames;
+          while (
+            index + 1 < frames.length &&
+            specimen._times[index + 1] <= playTime
+          )
+            index++;
+          if (index === frames.length - 1) {
+            playing = false;
+            $("play").textContent = "Play";
+            $("play").setAttribute("aria-label", "Play recording");
+          }
+          update();
+        }
+        requestAnimationFrame(tick);
+      }
+      refresh();
+      setInterval(refresh, 5000);
+      requestAnimationFrame(tick);
+    </script>
+  </body>
+</html>
